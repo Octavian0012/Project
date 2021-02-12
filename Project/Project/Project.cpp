@@ -1,14 +1,15 @@
 /*Aplicatie pentru gestiunea unui atelier de reparatii produse electrocasnice pentru care se inregistreaza aparatele electrocasnice primite,
 care au asociate liste cu interventii si costurile acestora. Aplicatia permite adaugarea unui obiect electrocasnic in atelier si
-stabilirea listei de interventii, determinarea costului reparatiei pentru un obiect cat si pentru toate obiectele din atelier, stergerea 
+stabilirea listei de interventii, determinarea costului reparatiei pentru un obiect cat si pentru toate obiectele din atelier, stergerea
 aparatelor, cat si alte functionalitati.*/
 
 #include <iostream>
 #include <string>
+#include <list>
 
 using namespace std;
 
-class DataSosireAparat{
+class DataSosireAparat {
 public:
 	int zi, luna, an;
 	friend istream& operator >> (istream& is, DataSosireAparat& d)
@@ -18,7 +19,7 @@ public:
 		cout << "Dati ziua (1-31) sosirii aparatului: "; is >> d.zi;
 		return is;
 	}
-	friend ostream& operator << (ostream& os, const DataSosireAparat d)
+	friend ostream& operator << (ostream& os, const DataSosireAparat& d)
 	{
 		os << "Anul sosirii: " << d.an << endl;
 		os << "Luna sosirii: " << d.luna << endl;
@@ -26,7 +27,7 @@ public:
 		return os;
 	}
 
-	friend bool operator > (const DataSosireAparat d1, const DataSosireAparat d2) {
+	friend bool operator > (const DataSosireAparat& d1, const DataSosireAparat& d2) {
 		if (d1.an > d2.an)
 			return true;
 		if (d1.an == d2.an)
@@ -39,7 +40,7 @@ public:
 		return false;
 	}
 
-	friend bool operator < (const DataSosireAparat d1, const DataSosireAparat d2) {
+	friend bool operator < (const DataSosireAparat& d1, const DataSosireAparat& d2) {
 		if (d1.an < d2.an)
 			return true;
 		if (d1.an == d2.an)
@@ -64,6 +65,22 @@ class Client {
 	long long int CNP;
 	bool dejainmemorie = false;
 public:
+	Client() {
+		this->id = -1;
+		this->nume = "Necunoscut";
+		this->prenume = "Necunoscut";
+		this->email = "Necunoscut";
+		this->NumarTelefon = 0;
+		this->CNP = 0;
+	}
+	Client(int id, string nume, string prenume, string email, long int nrtel, long long int cnp) {
+		this->id = id;
+		this->nume = nume;
+		this->prenume = prenume;
+		this->email = email;
+		this->NumarTelefon = nrtel;
+		this->CNP = cnp;
+	}
 	void setId(int id) {
 		this->id = id;
 	}
@@ -82,7 +99,6 @@ public:
 	void setCNP(long long int cnp) {
 		this->CNP = cnp;
 	}
-
 	int getId() {
 		return id;
 	}
@@ -104,7 +120,6 @@ public:
 	bool getMemorie() {
 		return dejainmemorie;
 	}
-
 	friend istream& operator >> (istream& is, Client &c) {
 		cout << "Introduceti id-ul clientului: ";
 		is >> c.id;
@@ -129,7 +144,7 @@ public:
 		v[c.id]++;
 		return is;
 	}
-	friend ostream& operator <<(ostream& os, const Client c) {
+	friend ostream& operator <<(ostream& os, const Client& c) {
 		os << "Id-ul clientului: " << c.id << endl;
 		os << "Numele clientului: " << c.nume << endl;
 		os << "Prenumele clientului: " << c.prenume << endl;
@@ -152,34 +167,30 @@ public:
 	}
 	Interventie() {
 	}
-	friend istream& operator >> (istream& is, Interventie* interventie)
+	friend istream& operator >> (istream& is, Interventie& interventie)
 	{
 		cout << "Dati numele reparatiei: ";
 		is.ignore();
-		getline(is, interventie->nume);
-		cout << "Dati pretul reparatiei: "; is >> interventie->pret;
+		getline(is, interventie.nume);
+		cout << "Dati pretul reparatiei: "; is >> interventie.pret;
 		return is;
 	}
-	friend ostream& operator << (ostream& os, const Interventie* interventie)
+	friend ostream& operator << (ostream& os, const Interventie& interventie)
 	{
-		os << "Numele interventiei: " << interventie->nume << endl;
-		os << "     Pretul interventiei: " << interventie->pret << endl;
+		os << "Numele interventiei: " << interventie.nume << endl;
+		os << "   Pretul interventiei: " << interventie.pret << endl;
 		return os;
 	}
 };
 
 class Aparat {
 	string nume;
-	int numarInterventii;
 	bool statusReparat = false;
 	bool statusRidicat = false;
 public:
 	Client c;
 	DataSosireAparat d;
-	Interventie** interventii;
-	int getnumarInterventii() {
-		return numarInterventii;
-	}
+	list <Interventie> interventii;
 	bool getstatusReparat() {
 		return statusReparat;
 	}
@@ -192,61 +203,46 @@ public:
 	void setstatusRidicat(bool status) {
 		statusRidicat = status;
 	}
-	Aparat()
-	{
-		numarInterventii = 0;
-		interventii = new Interventie *[0];
-	}
-	void adaugaInterventie(Interventie* i)
-	{
-		int numarInterventiiNou = numarInterventii + 1;
-		Interventie** temp = new Interventie *[numarInterventiiNou];
-		for (int i = 0; i < numarInterventii; i++)
-		{
-			*(temp + i) = *(interventii + i);
+	bool operator < (const Aparat& a) {
+		if (d < a.d) {
+			return true;
 		}
-		*(temp + numarInterventii) = i;
-		delete[] interventii;
-		interventii = temp;
-		numarInterventii = numarInterventiiNou;
+		return false;
+	}
+	void adaugaInterventie(Interventie& i)
+	{
+		interventii.push_back(i);
 	}
 	void stergeInterventie(int pozitie) {
-		int counter = 0;
-		int numarInterventiiNou = numarInterventii - 1;
-		Interventie** temp = new Interventie *[numarInterventii];
-		for (int i = 0; i < numarInterventii; i++) {
-			if (i != pozitie) {
-				*(temp + counter) = *(interventii + i);
-				counter++;
-			}
-		}
-		delete[] interventii;
-		interventii = temp;
-		numarInterventii = numarInterventiiNou;
+		list <Interventie>::iterator i = interventii.begin();
+		advance(i, pozitie);
+		interventii.erase(i);
 	}
-	friend istream& operator >> (istream& is, Aparat* aparat)
+	friend istream& operator >> (istream& is, Aparat& aparat)
 	{
 		cout << "Dati numele aparatului: ";
 		is.ignore();
-		getline(is, aparat->nume);
+		getline(is, aparat.nume);
 		cout << "Introduceti datele clientului: " << endl;
-		is >> aparat->c;
+		is >> aparat.c;
 		cout << "Introduceti data sosirii aparatului: " << endl;
-		is >> aparat->d;
+		is >> aparat.d;
 		return is;
 	}
-	friend ostream& operator << (ostream& os, Aparat* a)
+	friend ostream& operator << (ostream& os, Aparat a)
 	{
-		os << a->nume;
-		os << ". Aparatul " << a->nume << " contine " << a->numarInterventii << " interventii:" << endl;
-		for (int i = 0; i < a->numarInterventii; i++)
+		int counter = 0;
+		os << a.nume;
+		os << ". Aparatul " << a.nume << " contine " << a.interventii.size() << " interventii:" << endl;
+		for (list <Interventie>::iterator i = a.interventii.begin(); i != a.interventii.end(); i++)
 		{
-			os << "  " << i << ": " << a->interventii[i];
+			os << counter << ": " << *i;
+			counter++;
 		}
-		os << a->c;
-		os << a->d;
+		os << a.c;
+		os << a.d;
 		os << "Statusul reparatiei: ";
-		if (a->statusReparat) {
+		if (a.statusReparat) {
 			os << "Reparat." << endl;
 		}
 		else
@@ -254,7 +250,7 @@ public:
 			os << "Nereparat." << endl;
 		}
 		os << "Status ridicare client: ";
-		if (a->statusRidicat) {
+		if (a.statusRidicat) {
 			os << "Ridicat." << endl;
 		}
 		else
@@ -267,9 +263,9 @@ public:
 	float calculeazaCost()
 	{
 		float costReparatie = 0;
-		for (int i = 0; i < numarInterventii; i++)
+		for (list <Interventie>::iterator i = interventii.begin(); i != interventii.end(); i++)
 		{
-			costReparatie = costReparatie + interventii[i]->getPret();
+			costReparatie = costReparatie + (*i).getPret();
 		}
 		return costReparatie;
 	}
@@ -277,41 +273,20 @@ public:
 
 class Atelier {
 public:
-	int nrAparate;
-	Aparat** aparate;
-	Atelier() {
-		nrAparate = 0;
-		aparate = new Aparat *[0];
-	}
-	void AdaugaAparat(Aparat* a) {
-		int nrAparateNou = nrAparate + 1;
-		Aparat**temp = new Aparat *[nrAparateNou];
-		for (int i = 0; i < nrAparate; i++) {
-			*(temp + i) = *(aparate + i);
-		}
-		*(temp + nrAparate) = a;
-		delete[] aparate;
-		aparate = temp;
-		nrAparate = nrAparateNou;
+	list <Aparat> aparate;
+	void AdaugaAparat(const Aparat& a) {
+		aparate.push_back(a);
 	}
 	void StergeAparat(int pozitie) {
-		int counter = 0;
-		int nrAparateNou = nrAparate - 1;
-		Aparat** temp = new Aparat *[nrAparateNou];
-		for (int i = 0; i < nrAparate; i++) {
-			if (i != pozitie) {
-				*(temp + counter) = *(aparate + i);
-				counter++;
-			}
-		}
-		delete[] aparate;
-		aparate = temp;
-		nrAparate = nrAparateNou;
+		list <Aparat>::iterator i = aparate.begin();
+		advance(i, pozitie);
+		v[(*i).c.getId()] = 0;
+		aparate.erase(i);
 	}
 	float CalculeazaCostTotal() {
 		float costTotal = 0;
-		for (int i = 0; i < nrAparate; i++) {
-			costTotal += aparate[i]->calculeazaCost();
+		for (list <Aparat>::iterator i = aparate.begin(); i != aparate.end(); i++) {
+			costTotal += (*i).calculeazaCost();
 		}
 		return costTotal;
 	}
@@ -323,110 +298,114 @@ public:
 			cin >> id;
 		}
 		float costClient = 0;
-		for (int i = 0; i < nrAparate; i++) {
-			if (aparate[i]->c.getId() == id) {
-				costClient += aparate[i]->calculeazaCost();
+		for (list <Aparat>::iterator i = aparate.begin(); i != aparate.end(); i++) {
+			if ((*i).c.getId() == id) {
+				costClient += (*i).calculeazaCost();
 			}
 		}
 		cout << "Costul pe care clientul cu id-ul " << id << " trebuie sa-l plateasca este in valoare de: " << costClient << " lei" << endl;
 	}
-	friend ostream& operator << (ostream& os, const Atelier& a) {
-		if (a.nrAparate == 0) {
+	friend ostream& operator << (ostream& os, Atelier a) {
+		if (a.aparate.empty()) {
 			cout << "Atelierul este gol.";
 		}
 		else {
+			int counter = 0;
 			os << "Atelierul contine:" << endl;
-			for (int i = 0; i < a.nrAparate; i++) {
-				os << i << ": " << a.aparate[i];
+			for (list <Aparat>::iterator i = a.aparate.begin(); i != a.aparate.end(); i++) {
+				os << counter << ": " << *i;
+				counter++;
 			}
 		}
 		return os;
 	}
-	void IndiceAparatValid(int &numar) {
+	void IndiceAparatValid(unsigned int &numar) {
 		cin >> numar;
-		while (numar < 0 || numar >= this->nrAparate)
+		while (numar >= aparate.size())
 		{
 			cout << "Introdu un indice valid!" << endl;
 			cin >> numar;
 		}
 	}
-	void IndiceAparatValidPentruStergere(int &pozitieAp) {
+	void IndiceAparatValidPentruStergere(unsigned int &pozitieAp) {
 		cin >> pozitieAp;
-		while (pozitieAp < 0 || pozitieAp >= this->nrAparate || this->aparate[pozitieAp]->getnumarInterventii() == 0) {
+		list <Aparat>::iterator i = aparate.begin();
+		advance(i, pozitieAp);
+		while (pozitieAp >= aparate.size() || (*i).interventii.empty()) {
 			cout << "Introdu un indice valid, care contine interventii!" << endl;
 			cin >> pozitieAp;
 		}
 	}
-	void IndiceInterventieValid(int &pozitieAp, int &pozitieInt) {
+	void IndiceInterventieValid(unsigned int &pozitieAp, unsigned int &pozitieInt) {
 		cin >> pozitieInt;
-		while (pozitieInt < 0 || pozitieInt >= this->aparate[pozitieAp]->getnumarInterventii())
+		list <Aparat>::iterator i = aparate.begin();
+		advance(i, pozitieAp);
+		while (pozitieInt >= (*i).interventii.size())
 		{
 			cout << "Introdu un indice valid!" << endl;
 			cin >> pozitieInt;
 		}
 	}
-	void AdaugaDatePentruClientiDejaExistenti(Aparat* a) {
-		if (a->c.getMemorie()) {
-			for (int i = 0; i < this->nrAparate; i++) {
-				if (aparate[i]->c.getId() == a->c.getId()) {
-					a->c.setNume(aparate[i]->c.getNume());
-					a->c.setPrenume(aparate[i]->c.getPrenume());
-					a->c.setEmail(aparate[i]->c.getEmail());
-					a->c.setTelefon(aparate[i]->c.getTelefon());
-					a->c.setCNP(aparate[i]->c.getCNP());
+	void AdaugaDatePentruClientiDejaExistenti(Aparat& a) {
+		if (a.c.getMemorie()) {
+			for (list <Aparat>::iterator i = aparate.begin(); i != aparate.end(); i++) {
+				if ((*i).c.getId() == a.c.getId()) {
+					a.c.setNume((*i).c.getNume());
+					a.c.setPrenume((*i).c.getPrenume());
+					a.c.setEmail((*i).c.getEmail());
+					a.c.setTelefon((*i).c.getTelefon());
+					a.c.setCNP((*i).c.getCNP());
 				}
 			}
 		}
 	}
 	void OrdineReparatiiAparate() {
-		for (int i = 0; i < nrAparate - 1; i++) {
-			for (int j = i + 1; j < nrAparate; j++) {
-				if (aparate[i]->d > aparate[j]->d) {
-					swap(aparate[i], aparate[j]);
-				}
-			}
-		}
+		aparate.sort();
 		cout << "Ordinea in care trebuie reparate aparatele este: " << endl;
-		for (int i = 0; i < nrAparate; i++) {
-			if (aparate[i]->getstatusReparat() == false) {
-				cout << aparate[i] << " " << endl;			
+		for (list <Aparat>::iterator i = aparate.begin(); i != aparate.end(); i++) {
+			if ((*i).getstatusReparat() == false) {
+				cout << *i << " " << endl;
 			}
 		}
 	}
 	void AfiseazaAparateNeridicate() {
-		for (int i = 0; i < nrAparate; i++) {
-			if (aparate[i]->getstatusReparat() == true) {
-				cout << aparate[i] << " " << endl;
+		for (list <Aparat>::iterator i = aparate.begin(); i != aparate.end(); i++) {
+			if ((*i).getstatusReparat() == true) {
+				cout << *i << " " << endl;
 			}
 		}
 	}
 	void schimbastatusReparat() {
-		if (this->nrAparate == 0) {
+		if (aparate.empty()) {
 			cout << "Nu exista aparate in atelier!" << endl;
 		}
 		else {
-			int id;
+			unsigned int id;
 			cout << "Introdu id-ul aparatului care a fost reparat: "; cin >> id;
-			while (id < 0 || id >= this->nrAparate) {
+			while (id >= aparate.size()) {
 				cout << "Introdu un id valid!" << endl;
 				cin >> id;
 			}
-			aparate[id]->setstatusReparat(true);
+			list <Aparat>::iterator i = aparate.begin();
+			advance(i, id);
+			(*i).setstatusReparat(true);
 			cout << "Statusul a fost schimbat cu succes!" << endl;
 		}
 	}
 	void schimbastatusRidicat() {
-		if (this->nrAparate == 0) {
+		if (aparate.empty()) {
 			cout << "Nu exista aparate in atelier!" << endl;
 		}
 		else {
-			int id;
+			unsigned int id;
 			cout << "Introdu id-ul aparatului care a fost ridicat de catre client: "; cin >> id;
-			while (id < 0 || id >= this->nrAparate) {
+			while (id >= aparate.size()) {
 				cout << "Introdu un id valid!" << endl;
 				cin >> id;
 			}
-			aparate[id]->setstatusRidicat(true);
+			list <Aparat>::iterator i = aparate.begin();
+			advance(i, id);
+			(*i).setstatusRidicat(true);
 			StergeAparat(id);
 			cout << "Statusul aparatului a fost schimbat cu succes, iar acesta a fost sters din baza de date a atelierului." << endl;
 		}
@@ -467,10 +446,11 @@ int main() {
 	Introducere();
 	Atelier a;
 	do {
-		Aparat* ap = new Aparat();
-		Interventie* i = new Interventie();
+		Aparat ap;
+		Interventie i;
 		AfiseazaMeniu();
 		cin >> optiune;
+		Atelier b = a;
 		switch (optiune) {
 		case 1:
 			cin >> ap;
@@ -479,8 +459,8 @@ int main() {
 			cout << "Aparatul a fost adaugat cu succes!" << endl;
 			break;
 		case 2:
-			int numar;
-			if (a.nrAparate == 0) {
+			unsigned int numar;
+			if (a.aparate.empty()) {
 				cout << a;
 				break;
 			}
@@ -489,12 +469,14 @@ int main() {
 				cout << "Introdu indicele aparatului pentru care vrei sa adaugi interventia." << endl;
 				a.IndiceAparatValid(numar);
 				cin >> i;
-				a.aparate[numar]->adaugaInterventie(i);
+				list <Aparat>::iterator it = a.aparate.begin();
+				advance(it, numar);
+				(*it).adaugaInterventie(i);
 				cout << "Interventia a fost adaugata cu succes!" << endl;
 				break;
 			}
 		case 3:
-			if (a.nrAparate == 0) {
+			if (a.aparate.empty()) {
 				cout << a;
 				break;
 			}
@@ -503,7 +485,9 @@ int main() {
 				cout << "Introdu indicele aparatului pentru care vrei sa calculezi costul reparatiilor." << endl;
 				a.IndiceAparatValid(numar);
 				cout << "Costul pentru reparatiile aparatului " << numar << " este: ";
-				cout << a.aparate[numar]->calculeazaCost() << endl;
+				list <Aparat>::iterator it = a.aparate.begin();
+				advance(it, numar);
+				cout << (*it).calculeazaCost() << endl;
 				break;
 			}
 		case 4:
@@ -511,7 +495,7 @@ int main() {
 			cout << a.CalculeazaCostTotal() << endl;
 			break;
 		case 5:
-			if (a.nrAparate == 0) {
+			if (a.aparate.empty()) {
 				cout << a;
 				break;
 			}
@@ -525,8 +509,8 @@ int main() {
 			cout << a;
 			break;
 		case 7:
-			int pozitieAp, pozitieInt;
-			if (a.nrAparate == 0) {
+			unsigned int pozitieAp, pozitieInt;
+			if (a.aparate.empty()) {
 				cout << a;
 				break;
 			}
@@ -536,12 +520,14 @@ int main() {
 				a.IndiceAparatValidPentruStergere(pozitieAp);
 				cout << "Introdu indicele interventiei pe care doresti sa o stergi:" << endl;
 				a.IndiceInterventieValid(pozitieAp, pozitieInt);
-				a.aparate[pozitieAp]->stergeInterventie(pozitieInt);
+				list <Aparat>::iterator it = a.aparate.begin();
+				advance(it, pozitieAp);
+				(*it).stergeInterventie(pozitieInt);
 				cout << "Inregistrarea a fost stearsa cu succes!" << endl;
 				break;
 			}
 		case 8:
-			if (a.nrAparate == 0) {
+			if (a.aparate.empty()) {
 				cout << a;
 				break;
 			}
@@ -554,7 +540,7 @@ int main() {
 				break;
 			}
 		case 9:
-			a.OrdineReparatiiAparate();
+			b.OrdineReparatiiAparate();
 			break;
 		case 10:
 			a.AfiseazaAparateNeridicate();
